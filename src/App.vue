@@ -1,23 +1,51 @@
 <template>
-  <div>
-    <app-header></app-header>
-    <div class="container">
-      <div class="row">
-        <div class="col-lg-12">
-          <router-view/>
-        </div>
-      </div>
+  <v-app class="app">
+    <app-header />
+    <div class="content-wrapper">
+      <app-banner />
+      <Loading v-show="isLoading" />
+      <v-container class="router-wrapper">
+        <router-view />
+      </v-container>
     </div>
-  </div>
+    <the-snackbar />
+  </v-app>
 </template>
 
 <script>
-import Header from '@/views/Header.vue'
+import Header from '@/components/header/Header.vue'
+import Loading from '@/components/Loading.vue'
+import Banner from '@/components/Banner.vue'
+import TheSnackbar from '@/components/TheSnackbar.vue'
 
 export default {
-  components: { appHeader: Header }
+  components: {
+    appHeader: Header,
+    appBanner: Banner,
+    Loading,
+    TheSnackbar
+  },
+  computed: {
+    isLoading () {
+      return this.$store.getters.isLoading
+    }
+  }
 }
 </script>
 
-<style>
+<style lang="scss" scoped>
+.app {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  .router-wrapper {
+    position: relative;
+    flex: 1;
+  }
+
+  .content-wrapper {
+    position: relative;
+  }
+}
 </style>

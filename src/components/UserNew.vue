@@ -1,95 +1,129 @@
 <template>
-    <div>
-        <h1>Creating New User</h1>
-        <div v-if="userSaved">
-            <div class="row">
-                <div class="alert alert-success text-center">
-                    <h2>User saved.</h2>
-                </div>
-            </div>
-        </div>
-        <div v-if="!userSaving">
-            <form>
-                <div class="row">
-                    <div class="form-group col-md-4">
-                        <label for="firstName">Firstname</label>
-                        <input
-                            type="text"
-                            id="firstName"
-                            class="form-control"
-                            v-model="user.firstName">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label for="lastName">Lastname</label>
-                        <input
-                            type="text"
-                            id="lastName"
-                            class="form-control"
-                            v-model="user.lastName">
-                    </div>
-                    <div class="form-group col-md-4">
-                        <label for="emailAddress">Email Address</label>
-                        <input
-                            type="text"
-                            id="emailAddress"
-                            class="form-control"
-                            v-model="user.emailAddress">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="form-group col-md-12">
-                        <button
-                            class="btn btn-success"
-                            @click.prevent="saveUser"
-                            >Save Changes</button>
-                    </div>
-                </div>
-            </form>
-        </div>
-        <div v-else>
-            <div class="row">
-                <div class="col-lg-12">
-                    <img src="../assets/loading.png" class="mx-auto d-block" />
-                </div>
-            </div>
-        </div>
+  <div>
+    <h1>Creating New User</h1>
+    <div v-if="showError">
+      <h2 class="error">
+        Please fix all errors.
+      </h2>
     </div>
+    <v-form
+      ref="form"
+      v-model="valid"
+      @input="handleFormInput"
+    >
+      <v-container>
+        <v-layout>
+          <v-flex
+            xs12
+            md4
+          >
+            <v-text-field
+              id="firstName"
+              v-model="user.firstName"
+              label="First name"
+              type="text"
+              name="firstName"
+              class="form-control"
+              :rules="[rules.required, rules.length255]"
+              required
+            />
+          </v-flex>
+          <v-flex
+            xs12
+            md4
+          >
+            <v-text-field
+              id="lastName"
+              v-model="user.lastName"
+              label="Last name"
+              type="text"
+              name="lastName"
+              class="form-control"
+              :rules="[rules.required, rules.length255]"
+              required
+            />
+          </v-flex>
+          <v-flex
+            xs12
+            md4
+          >
+            <v-text-field
+              id="emailAddress"
+              v-model="user.emailAddress"
+              label="Email address"
+              type="text"
+              name="emailAddress"
+              class="form-control"
+              :rules="[rules.required, rules.email, rules.length255]"
+              required
+            />
+          </v-flex>
+        </v-layout>
+        <v-btn
+          type="submit"
+          color="success"
+          @click.prevent="updateUser"
+        >
+          Save Changes
+        </v-btn>
+      </v-container>
+    </v-form>
+  </div>
 </template>
 
 <script>
-    export default {
-        props: [ 'id' ],
-        data() {
-            return { 
-                user: {
-                    id: '',
-                    firstName: '',
-                    lastName: '',
-                    emailAddress: '',
-                    role: ''
-                },
-                userSaving: false,
-                userSaved: false,
-                userToken: this.$store.getters.getUserToken
-            }
-        },
-        methods: {
-            saveUser() {
-                this.userSaving = true;
-                const formData = {
-                    firstName: this.user.firstName,
-                    lastName: this.user.lastName,
-                    emailAddress: this.user.emailAddress
-                }
-                this.$http.post("/api/admin/users", formData)
-                    .then(res => {
-                        console.log(res);
-                        if(res.status === 200){
-                            this.userSaving = false;
-                            this.userSaved = true;
-                        }
-                    }).catch(error => console.log(error));
-            }
-        }
+import ValidationRules from '@/utils/ValidationRules'
+import UserAddRequest from '@/models/requests/UserAddRequest'
+
+const UserNew = {
+  metaInfo: {
+    title: 'Add New User'
+  },
+  data () {
+    return {
+      user: {
+        id: '',
+        firstName: '',
+        lastName: '',
+        emailAddress: '',
+        role: ''
+      },
+      userSaving: false,
+      userSaved: false,
+      userToken: this.$store.getters.getUserToken,
+      rules: ValidationRules,
+      valid: false,
+      showError: false
     }
+  },
+  methods: {
+    async updateUser () {
+      if (!this.valid) {
+        this.$refs.form.validate()
+        this.showError = true
+        return
+      }
+      const userAddRequest = new UserAddRequest(
+        this.user.firstName,
+        this.user.lastName,
+        this.user.emailAddress
+      )
+
+      try {
+        await this.$store.dispatch('User/addUser', userAddRequest)
+        this.$router.push('/users')
+      } catch (e) {
+        console.log('failed to add user, not changing route')
+      }
+    },
+    handleFormInput () {
+      if (!this.showError) return
+      if (this.valid) {
+        this.showError = false
+      }
+    }
+  }
+}
+
+export default UserNew
 </script>
